@@ -5,7 +5,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCh
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 
 FusionClubUkraine = -403914706 # Fusion Club Ukraine
-FusionClubBotTest = -403914706 # Fusion Club Ukraine Bot Test
+FusionClubBotTest = -1001474342682 # Fusion Club Ukraine Bot Test
 test_group = -403914706
 MANAGED_GROUP = test_group
 
@@ -16,8 +16,8 @@ FUSION_CLUB_BOT_TOKEN = '1201617239:AAGkq7dsbimkHI6PEQZcgD_6cDQxl1p4qOY'
 FUSION_CLUB_PAY_TOKEN = '410694247:TEST:2c8b7653-cede-4101-935c-159530cb3466'
 
 
-BOT_TOKEN = TEST_BOT_TOKEN
-PAY_TOKEN = TEST_PAY_TOKEN
+BOT_TOKEN = FUSION_CLUB_BOT_TOKEN
+PAY_TOKEN = FUSION_CLUB_PAY_TOKEN
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)

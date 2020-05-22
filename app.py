@@ -1,23 +1,9 @@
-import sys
-import logging
+import sys, logging, re, json
+from ad_filter_table import AD_FILTERS
+from ad_filter_table import AD_FILTER_FLAGS
 from pymongo import MongoClient
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-
-FusionClubUkraine = -403914706 # Fusion Club Ukraine
-FusionClubBotTest = -1001474342682 # Fusion Club Ukraine Bot Test
-test_group = -403914706
-MANAGED_GROUP = test_group
-
-TEST_BOT_TOKEN = '1275693729:AAG_qe8CvF8ceHz3uBxbtOkO6Rf3xlrr46k'
-TEST_PAY_TOKEN = '410694247:TEST:62a7fd4b-d731-4e77-98ad-46907df79d40'
-
-FUSION_CLUB_BOT_TOKEN = '1201617239:AAGkq7dsbimkHI6PEQZcgD_6cDQxl1p4qOY'
-FUSION_CLUB_PAY_TOKEN = '410694247:TEST:2c8b7653-cede-4101-935c-159530cb3466'
-
-
-BOT_TOKEN = FUSION_CLUB_BOT_TOKEN
-PAY_TOKEN = FUSION_CLUB_PAY_TOKEN
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -37,6 +23,30 @@ db = client['FusionClubDB']
 # Fetch our series collection
 users_collection = db['users']
 orders_collection = db['orders']
+setting_collection = db['settings']
+
+class CustomFilter(BaseFilter):
+    def filter(self, update):
+        child_filters = []
+        for group in get_allowed_groups(): child_filters.append(Filters.chat(group["_id"]))
+
+        for child_f in child_filters:
+            if child_f.filter(update): return True
+
+        return False
+
+
+def get_bot_token():
+    settings = setting_collection.find_one()
+    return settings["bot_token"]
+
+def get_pay_token():
+    settings = setting_collection.find_one()
+    return settings["pay_token"]
+
+def get_allowed_groups():
+    settings = setting_collection.find_one()
+    return settings["allowed_groups"]
 
 def successful_payment_callback(update, context):
     user_id = update.message.from_user.id
@@ -98,7 +108,7 @@ def buy_callback(update, context):
     title = 'Квота на публикацию обьявлений'
     description = 'Fusion Club Ukraine'
     payload = count_str
-    token = PAY_TOKEN
+    token = get_pay_token()
     start_parameter = 'test-payment'
     currency = 'UAH'
     prices = [LabeledPrice("Пополнение квоты x %d" % count, count * QUOTA_PRICE * 100)]
@@ -137,7 +147,6 @@ def balance_callback(update, context):
 def end_callback(update, context):
     return 
         
-
 def topup_callback(update, context):
     query = update.callback_query
     query.answer()
@@ -157,7 +166,14 @@ def addad_callback(update, context):
     return MAIN_MENU
 
 def is_message_ad(update, context):
-    return update.message.text.find("auto.ria.com") != -1
+    if not update.message.text:
+        return False
+
+    for filter in AD_FILTERS:
+        m = re.match(filter, update.message.text, AD_FILTER_FLAGS)
+        if m: return True
+
+    return False
 
 def group_message(update, context):
     user_id = update.message.from_user.id
@@ -166,7 +182,7 @@ def group_message(update, context):
     if users_collection.count_documents({"_id" : user_id}) == 0:
         users_collection.insert_one({"_id" : user_id, "quota" : 0})
 
-    print("Group message: {}".format(update.message))
+    print("---------------------------------------------------------------------------------------------------------------------------------------------\nGroup message: {}".format(update.message))
 
     if not is_message_ad(update, context):
         return
@@ -182,15 +198,15 @@ def group_message(update, context):
             context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), parse_mode=None)
         except:
             user_mention = "@%s" % user_nick
-            reply_text = "Обнаружена реклама!\nВыполучаете предупреждение!"
+            reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
             update.message.reply_text("%s\n%s" % (user_mention, reply_text))
 
-
 def main(argv):
-    updater = Updater(BOT_TOKEN, use_context=True)
+    updater = Updater(get_bot_token(), use_context=True)
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('menu', menu_callback, Filters.private)],
+        entry_points=[CommandHandler('menu', menu_callback, Filters.private),
+                        CommandHandler('start', menu_callback, Filters.private)],
         states={
             MAIN_MENU:  [CallbackQueryHandler(help_callback, pattern='^' + str(HELP) + '$'),
                         CallbackQueryHandler(balance_callback, pattern='^' + str(BALANCE) + '$'),
@@ -206,7 +222,9 @@ def main(argv):
     # updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), message_handler))
 
     updater.dispatcher.add_handler(conv_handler)
-    updater.dispatcher.add_handler(MessageHandler(Filters.chat(MANAGED_GROUP), group_message))
+    # updater.dispatcher.add_handler(CommandHandler('start', group_activation_callback, Filters.group))
+    # updater.dispatcher.add_handler(MessageHandler(Filters.chat(test_group) | Filters.chat(test_group2) | Filters.chat(FusionClubBotTest) | Filters.chat(FusionClubUkraine), group_message))
+    updater.dispatcher.add_handler(MessageHandler(CustomFilter(), group_message))
     updater.dispatcher.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     updater.dispatcher.add_handler(MessageHandler(Filters.successful_payment, successful_payment_callback))
     

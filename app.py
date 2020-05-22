@@ -173,15 +173,23 @@ def is_message_ad(update, context):
         return False
 
     for filter in AD_FILTERS:
-        m = re.match(filter, update.message.text, AD_FILTER_FLAGS)
-        if m: return True
+        if filter['mode'] == AdMode.OR:
+            for rx in filter["rxes"]:
+                m = re.search(rx, update.message.text, AD_FILTER_FLAGS)
+                if m: return True
+        else:
+            for rx in filter["rxes"]:
+                m = re.search(rx, update.message.text, AD_FILTER_FLAGS)
+                if not m: 
+                    return False
+            return True
 
     return False
 
 def group_message(update, context):
     if not update.message:
         return
-        
+
     user_id = update.message.from_user.id
     user_nick = update.message.from_user.username
     chat_id = update.message.chat.id

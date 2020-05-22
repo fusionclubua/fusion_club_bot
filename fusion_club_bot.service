@@ -1,0 +1,10 @@
+[Unit]
+Description=Fusion Club Telegram Bot
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m /home/herutskyi/fusion_club_bot
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,5 @@
 import sys, logging, re, json
-from ad_filter_table import AD_FILTERS
-from ad_filter_table import AD_FILTER_FLAGS
+from . import ad_filter_table
 from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
@@ -74,7 +73,6 @@ def menu_callback(update, context):
                 [InlineKeyboardButton("Подать обьявление", callback_data=str(ADDAD))]]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # message_text = "Тестовый режим!\nКарта: 4242 4242 4242 4242\nДата: любая\nCVV2: любой\nЕсли бота добавить в админы\nон будет удалять сообщения\nсо ссылками на auto.ria.com"
     update.message.reply_text('Fusion Club Ukraine', reply_markup=reply_markup)
 
     print('Command: [{}] {}'.format(update.message.from_user.username, update.message.text))

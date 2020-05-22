@@ -179,6 +179,9 @@ def is_message_ad(update, context):
     return False
 
 def group_message(update, context):
+    if not update.message:
+        return
+        
     user_id = update.message.from_user.id
     user_nick = update.message.from_user.username
     chat_id = update.message.chat.id

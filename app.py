@@ -6,7 +6,7 @@ from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardBut
 if __name__ == "__main__":
     from ad_filter_table import *
 else:
-    from . import ad_filter_table
+    from .ad_filter_table import *
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,6 +22,7 @@ HELP, BALANCE, TOPUP, ADDAD, BACK = range(5)
 
 # Create the client
 client = MongoClient('localhost', 27017)
+filter_root = FilterNode(AD_PATTERN_TREE)
 # Connect to our database
 db = client['FusionClubDB']
 # Fetch our series collection
@@ -216,18 +217,23 @@ def is_message_ad(update, context):
     strings = collect_strings(update)
 
     for string in strings:
-        if is_match_ad0(string):
+        if filter_root.is_match_scheme(string):
             return True
+        # if is_match_ad(string): return True
 
     return False
 
 def group_message(update, context):
-    if not update.message:
-        return
+    msg = None
+    if update.message:
+        msg = update.message
+    elif update.edited_message:
+        msg = update.edited_message
+    if not msg: return
 
-    user_id = update.message.from_user.id
-    user_nick = update.message.from_user.username
-    chat_id = update.message.chat.id
+    user_id = msg.from_user.id
+    user_nick = msg.from_user.username
+    chat_id = msg.chat.id
     if users_collection.count_documents({"_id" : user_id}) == 0:
         users_collection.insert_one({"_id" : user_id, "quota" : 0})
 
@@ -248,7 +254,8 @@ def group_message(update, context):
         except:
             user_mention = "@%s" % user_nick
             reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
-            update.message.reply_text("%s\n%s" % (user_mention, reply_text))
+            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg.message_id)
+            #update.message.reply_text("%s\n%s" % (user_mention, reply_text))
 
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)

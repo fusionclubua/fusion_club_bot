@@ -25,20 +25,29 @@ autoria = r"(.+)?auto\.ria\.com(.+)?"
 
 AD_FILTERS = [
     # autoria
-    { "mode": Logic.OR, "rxes" : [r"(.+)?auto\.ria\.com(.+)?"]},
-
+    { "mode": Logic.OR, "rxes" : [
+                {'rx': r"(.+)?auto\.ria\.com(.+)?"}
+            ]
+    },
     # <что угодно>продам<слова><сумма><валюта><что_угодно>
     #r"([по][рт][оа]да([мю]|[её]тся)(\s+)?)(([а-яa-z]+(\s{1,30})?)+)(\d+([\.,]\d+)?\s{0,30})(([а-яa-z]+(\s{1,30}))+)?(грн|usd|грв|\$|UAH|хрн|гривен|грив|гривні(в)?|хривен|(у\.?(\s{1,30})?е\.?))(.+)?"
     { "mode": Logic.AND , "rxes": [
-            r"([по][рт][оа]да([мю]|[её]тся))",
-            r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к|k|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{1,30})?е\.?))(.+)?(\d+([\.,]\d+)?)"]},
-
+                {'rx': r"([по][рт][оа]да([мю]|[её]тся))"},
+                {'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к|k|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{1,30})?е\.?))(.+)?(\d+([\.,]\d+)?)"}
+            ]
+    },
     { "mode": Logic.AND , "rxes": [
-            r"([по][рт][оа]да([мю]|[её]тся))",
-            r"(\d+([\.,]\d+)?)(.+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к|k|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{1,30})?е\.?))"]}
+                {'rx': r"([по][рт][оа]да([мю]|[её]тся))"},
+                {'rx': r"(\d+([\.,]\d+)?)(.+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к|k|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{1,30})?е\.?))"}
+            ]
+    },
     #что_угодно + продам + слова + сумма + возможно(слова) + валюта + что_угодно
     # <сумма><валюта>продам<слова>
     #сумма + возможно(слова) + продам + слова
+    { 'mode': Logic.AND , 'rxes': [
+                {'count': 3, 'rx': r"(\d+([\.,]\d+)?)(.+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к|k|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{1,30})?е\.?))"}
+            ]
+    }
 ]
 
 def is_match_ad0(text):  
@@ -47,15 +56,17 @@ def is_match_ad0(text):
         filter_result = False
         if filter['mode'] == Logic.OR:
             for rx in filter["rxes"]:
-                m = re.search(rx, text, AD_FILTER_FLAGS)
-                if m: 
+                need_to_find = rx.get('count', 1)
+                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
+                if m and len(m) >= need_to_find: 
                     filter_result = True
                     break
         else:
             and_result = True
             for rx in filter["rxes"]:
-                m = re.search(rx, text, AD_FILTER_FLAGS)
-                if not m: 
+                need_to_find = rx.get('count', 1)
+                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
+                if not m or len(m) < need_to_find : 
                     and_result = False
                     break
             filter_result = and_result
@@ -119,6 +130,7 @@ if "__main__" == __name__:
         "auto.ria.com",
         "Продам два крыла под реставрацию 1000грн",
         "Продам Ford Fusion Titanium\nЧистый 2018 год\nПробег 8100 км\nVIN 3FA6P0K96JR281035\n\n20500 долларов\nТорг на быстрое переоформление",
+        'Залишки після ремонту (все оигінал) :\n1.  Декоративна накладка з фіксатором кочерги 900 грн\n2.  Замок капота лівий 1200 грн\n3.  Приборна панель на 2 екрани 80 дол\n4.  Блоки розжига галогенових фар з рестайлінга по 50 дол за шт',
         "Продам колеса за 100 грн",
         "Продам колеса за грн",
         "колеса за 100 грн",
@@ -131,7 +143,7 @@ if "__main__" == __name__:
     filter = FilterNode(AD_PATTERN_TREE)
     
     single_test = True
-    single_idx = 2
+    single_idx = 3
 
     if single_test:
         result1 = filter.is_match_scheme(tests[single_idx])

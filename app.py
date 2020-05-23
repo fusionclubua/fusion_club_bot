@@ -168,21 +168,23 @@ def addad_callback(update, context):
     query.edit_message_text(text="Я пока что нифига такого не умею!", reply_markup=query.message.reply_markup)
     return MAIN_MENU
 
-def is_match_ad(str):
+def is_match_ad(text):  
     result = False
     for filter in AD_FILTERS:
         filter_result = False
         if filter['mode'] == Logic.OR:
             for rx in filter["rxes"]:
-                m = re.search(rx, str, AD_FILTER_FLAGS)
-                if m: 
+                need_to_find = rx.get('count', 1)
+                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
+                if m and len(m) >= need_to_find: 
                     filter_result = True
                     break
         else:
             and_result = True
             for rx in filter["rxes"]:
-                m = re.search(rx, str, AD_FILTER_FLAGS)
-                if not m: 
+                need_to_find = rx.get('count', 1)
+                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
+                if not m or len(m) < need_to_find : 
                     and_result = False
                     break
             filter_result = and_result
@@ -190,6 +192,7 @@ def is_match_ad(str):
         if filter_result:
             result = filter_result
             break
+
     return result
 
 def collect_strings(update):
@@ -208,7 +211,7 @@ def is_message_ad(update, context):
     strings = collect_strings(update)
 
     for string in strings:
-        if is_match_ad(string):
+        if is_match_ad0(string):
             return True
 
     return False

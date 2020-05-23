@@ -197,13 +197,18 @@ def is_match_ad(text):
 
 def collect_strings(update):
     strings = []
-    if update.message:
-        message = update.message
+    message_objects = []
 
-        if message.text:
-            strings.append(message.text)
-        if message.caption:
-            strings.append(message.caption)
+    if update.message:
+        message_objects.append(update.message)
+    if update.edited_message:
+        message_objects.append(update.edited_message)
+
+    for msg in message_objects:
+        if msg.text:
+            strings.append(msg.text)
+        if msg.caption:
+            strings.append(msg.caption)
 
     return strings
 

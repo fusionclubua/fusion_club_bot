@@ -172,7 +172,7 @@ def is_match_ad(str):
     result = False
     for filter in AD_FILTERS:
         filter_result = False
-        if filter['mode'] == AdMode.OR:
+        if filter['mode'] == Logic.OR:
             for rx in filter["rxes"]:
                 m = re.search(rx, str, AD_FILTER_FLAGS)
                 if m: 
@@ -210,7 +210,7 @@ def is_message_ad(update, context):
     for string in strings:
         if is_match_ad(string):
             return True
-            
+
     return False
 
 def group_message(update, context):

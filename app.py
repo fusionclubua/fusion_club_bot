@@ -168,22 +168,49 @@ def addad_callback(update, context):
     query.edit_message_text(text="Я пока что нифига такого не умею!", reply_markup=query.message.reply_markup)
     return MAIN_MENU
 
-def is_message_ad(update, context):
-    if not update.message.text:
-        return False
-
+def is_match_ad(str):
+    result = False
     for filter in AD_FILTERS:
+        filter_result = False
         if filter['mode'] == AdMode.OR:
             for rx in filter["rxes"]:
-                m = re.search(rx, update.message.text, AD_FILTER_FLAGS)
-                if m: return True
+                m = re.search(rx, str, AD_FILTER_FLAGS)
+                if m: 
+                    filter_result = True
+                    break
         else:
+            and_result = True
             for rx in filter["rxes"]:
-                m = re.search(rx, update.message.text, AD_FILTER_FLAGS)
+                m = re.search(rx, str, AD_FILTER_FLAGS)
                 if not m: 
-                    return False
-            return True
+                    and_result = False
+                    break
+            filter_result = and_result
 
+        if filter_result:
+            result = filter_result
+            break
+    return result
+
+def collect_strings(update):
+    strings = []
+    if update.message:
+        message = update.message
+
+        if message.text:
+            strings.append(message.text)
+        if message.caption:
+            strings.append(message.caption)
+
+    return strings
+
+def is_message_ad(update, context):
+    strings = collect_strings(update)
+
+    for string in strings:
+        if is_match_ad(string):
+            return True
+            
     return False
 
 def group_message(update, context):

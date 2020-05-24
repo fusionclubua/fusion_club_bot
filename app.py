@@ -3,13 +3,16 @@ from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from ad_filter_table import is_match_ad, FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
+from config import config as cfg
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)                  
 
+DEFAULT_BOT = 'FusionClubADMaster'
 QUOTA_PRICE = 10
+
 # Stages
 MAIN_MENU, TOPUP_MENU = range(2)
 # Callback data
@@ -35,18 +38,20 @@ class CustomFilter(BaseFilter):
 
         return False
 
+def get_settings():
+    return setting_collection.find_one({'bot_name' : cfg.get('db_bot', DEFAULT_BOT)})
 
+def get_bot_name():
+    return get_settings()["bot_name"]
+    
 def get_bot_token():
-    settings = setting_collection.find_one()
-    return settings["bot_token"]
+    return get_settings()["bot_token"]
 
 def get_pay_token():
-    settings = setting_collection.find_one()
-    return settings["pay_token"]
+    return get_settings()["pay_token"]
 
 def get_allowed_groups():
-    settings = setting_collection.find_one()
-    return settings["allowed_groups"]
+    return get_settings()["allowed_groups"]
 
 def successful_payment_callback(update, context):
     user_id = update.message.from_user.id
@@ -237,7 +242,7 @@ def main(argv):
                         CallbackQueryHandler(topup_callback, pattern='^' + str(TOPUP) + '$'),
                         CallbackQueryHandler(addad_callback, pattern='^' + str(ADDAD) + '$')],
             TOPUP_MENU: [CallbackQueryHandler(main_menu_callback, pattern='^' + str(BACK) + '$'),
-                        CallbackQueryHandler(buy_callback, pattern='^topup_\d+$')]
+                        CallbackQueryHandler(buy_callback, pattern=r'^topup_\d+$')]
         },
         fallbacks=[CommandHandler('menu', menu_callback, Filters.private)]
     )

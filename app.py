@@ -1,7 +1,7 @@
 import sys, logging, re, json
 from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
-from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import User, Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from ad_filter_table import is_match_ad, FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
 from config import config as cfg
 
@@ -43,7 +43,7 @@ def get_settings():
 
 def get_bot_name():
     return get_settings()["bot_name"]
-    
+
 def get_bot_token():
     return get_settings()["bot_token"]
 
@@ -52,6 +52,24 @@ def get_pay_token():
 
 def get_allowed_groups():
     return get_settings()["allowed_groups"]
+
+def get_chat_admin(context, chat_id, find_creator=False):
+    admins = context.bot.get_chat_administrators(chat_id)
+
+    for admin in admins:
+        if not find_creator:
+            if admin:
+                return admin
+
+        if admin.status == 'creator':
+            return admin
+    
+def get_user_name(user):
+    return f"@{user.username}" if user.username else f"{user.first_name} {user.last_name}" if user.last_name else f"{user.first_name}"
+
+def get_member_name(member):
+    return get_user_name(member.user)
+
 
 def successful_payment_callback(update, context):
     user_id = update.message.from_user.id
@@ -196,6 +214,55 @@ def is_message_ad(update, context):
 
     return False
 
+def is_message_banofbot(msg, context):
+    result = False
+    if msg.text and msg.reply_to_message:
+        if msg.reply_to_message.from_user.id == context.bot.get_me().id:
+            if (
+                '@' in msg.text and ('banofbot' in msg.text)
+                or ('voteban' in msg.text)
+                or ('Voteban' in msg.text)
+               ):
+                result = True
+    return result
+    
+        
+
+def on_ad_messsage(msg, context):
+    user_id = msg.from_user.id
+    user_nick = msg.from_user.username
+    chat_id = msg.chat.id
+    msg_id = msg.message_id
+
+    user = users_collection.find_one({"_id" : user_id})
+    if (user['quota'] >= 1):
+        users_collection.update_one({"_id" : user_id}, {'$inc': {"quota": -1}})
+    else:
+        try:
+            context.bot.delete_message(chat_id, msg_id)
+            user_mention = "@%s" % user_nick
+            reply_text = "Обнаружена несанкционированная реклама!\nСообщение удалено!"
+            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), parse_mode=None)
+        except:
+            user_mention = "@%s" % user_nick
+            reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
+            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg_id)
+            #update.message.reply_text("%s\n%s" % (user_mention, reply_text))
+
+def on_banofbot_mention(msg, context):
+    user_id = msg.from_user.id
+    user_nick = msg.from_user.username
+    chat_id = msg.chat.id
+    msg_id = msg.message_id
+    sticker_file_id = 'CAACAgIAAx0CV_vo1QACAQteys6AittesCZ9iGkRPLCueYMWxwACGgIAAzigCtQ5vjSOsG1SGQQ'
+    context.bot.send_sticker(chat_id, sticker_file_id, reply_to_message_id=msg_id)
+
+    creator = get_chat_admin(context, chat_id, True)
+    context.bot.send_message(chat_id, f"{get_member_name(creator)}\nЧто за дела?\nЯ так немогу работать!\nМеня хочет забанить: {get_user_name(msg.from_user)}", reply_to_message_id=msg_id)
+
+
+
+
 def group_message(update, context):
     msg = None
     if update.message:
@@ -207,28 +274,19 @@ def group_message(update, context):
     user_id = msg.from_user.id
     user_nick = msg.from_user.username
     chat_id = msg.chat.id
+    msg_id = msg.message_id
+
     if users_collection.count_documents({"_id" : user_id}) == 0:
         users_collection.insert_one({"_id" : user_id, "quota" : 0})
 
     print("---------------------------------------------------------------------------------------------------------------------------------------------\nGroup message: {}".format(update.message))
 
-    if not is_message_ad(update, context):
-        return
+    if is_message_ad(update, context):
+        return on_ad_messsage(msg, context)
+    elif is_message_banofbot(msg, context):
+        return on_banofbot_mention(msg, context)
 
-    user = users_collection.find_one({"_id" : user_id})
-    if (user['quota'] >= 1):
-        users_collection.update_one({"_id" : user_id}, {'$inc': {"quota": -1}})
-    else:
-        try:
-            update.message.delete()
-            user_mention = "@%s" % user_nick
-            reply_text = "Обнаружена несанкционированная реклама!\nСообщение удалено!"
-            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), parse_mode=None)
-        except:
-            user_mention = "@%s" % user_nick
-            reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
-            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg.message_id)
-            #update.message.reply_text("%s\n%s" % (user_mention, reply_text))
+
 
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)

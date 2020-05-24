@@ -163,11 +163,11 @@ if "__main__" == __name__:
     single_idx = 2
 
     if single_test: # For debugging is useful to specify the string and debug it
-        result1 = filter.is_match_scheme(ads[single_idx]['text'])
-        result2 = is_match_ad0(ads[single_idx]['text'])
+        result1 = filter.is_match_scheme(ads[single_idx]['text']) #new way
+        result2 = is_match_ad(ads[single_idx]['text']) #old way
         print(f"Test: {result1} | {result2} on text: \"{ads[single_idx]['text']}\"")
     else: # Something like a tests ;)
         for i in range(len(ads)):
             result1 = filter.is_match_scheme(ads[i]['text'])
-            result2 = is_match_ad0(ads[i]['text'])
+            result2 = is_match_ad(ads[i]['text'])
             print(f"Test [{i}]: {'Pass' if result1 == ads[i]['expect'] else 'Fail'} | { 'Pass' if result2 is ads[i]['expect'] else 'Fail'}")

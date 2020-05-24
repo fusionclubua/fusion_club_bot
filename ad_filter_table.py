@@ -53,7 +53,7 @@ AD_FILTERS = [
     }
 ]
 
-def is_match_ad0(text):  
+def is_match_ad(text):  
     result = False
     for filter in AD_FILTERS:
         filter_result = False
@@ -162,11 +162,11 @@ if "__main__" == __name__:
     single_test = False
     single_idx = 2
 
-    if single_test:
+    if single_test: # For debugging is useful to specify the string and debug it
         result1 = filter.is_match_scheme(ads[single_idx]['text'])
         result2 = is_match_ad0(ads[single_idx]['text'])
         print(f"Test: {result1} | {result2} on text: \"{ads[single_idx]['text']}\"")
-    else:
+    else: # Something like a tests ;)
         for i in range(len(ads)):
             result1 = filter.is_match_scheme(ads[i]['text'])
             result2 = is_match_ad0(ads[i]['text'])

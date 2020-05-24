@@ -2,7 +2,7 @@ import sys, logging, re, json
 from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-from ad_filter_table import FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
+from ad_filter_table import is_match_ad, FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -163,33 +163,6 @@ def addad_callback(update, context):
     query = update.callback_query
     query.edit_message_text(text="Я пока что нифига такого не умею!", reply_markup=query.message.reply_markup)
     return MAIN_MENU
-
-def is_match_ad(text):  
-    result = False
-    for filter in AD_FILTERS:
-        filter_result = False
-        if filter['mode'] == Logic.OR:
-            for rx in filter["rxes"]:
-                need_to_find = rx.get('count', 1)
-                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
-                if m and len(m) >= need_to_find: 
-                    filter_result = True
-                    break
-        else:
-            and_result = True
-            for rx in filter["rxes"]:
-                need_to_find = rx.get('count', 1)
-                m = re.findall(rx['rx'], text, AD_FILTER_FLAGS)
-                if not m or len(m) < need_to_find : 
-                    and_result = False
-                    break
-            filter_result = and_result
-
-        if filter_result:
-            result = filter_result
-            break
-
-    return result
 
 def collect_strings(update):
     strings = []

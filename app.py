@@ -2,12 +2,7 @@ import sys, logging, re, json
 from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-
-if __name__ == "__main__":
-    from ad_filter_table import *
-else:
-    from .ad_filter_table import *
-
+from ad_filter_table import FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)

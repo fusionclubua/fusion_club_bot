@@ -137,43 +137,37 @@ AD_PATTERN_TREE = {'logic': Logic.OR, 'children': [
         FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(\d+([\.,]\d+)?)(\s+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"})
         ,FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))(\s+)?(\d+([\.,]\d+)?)"})
     ]})
-    #,FilterNode({'logic': Logic.OR, 'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(\d+([\.,]\d+)?)(\s+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"})
 ]}
 
-if "__main__" == __name__:
-    print("Starting...")
-    tests = [
-        "магия auto.ria.com",
-        "Продам два крыла под реставрацию 1000грн",
-        "Продам два крыла под реставрацию 1000грн магия",
-        "Продам Ford Fusion Titanium\nЧистый 2018 год\nПробег 8100 км\nVIN 3FA6P0K96JR281035\n\n20500 долларов\nТорг на быстрое переоформление",
-        'Залишки після ремонту (все оигінал) :\n1.  Декоративна накладка з фіксатором кочерги 900 грн\n2.  Замок капота лівий 1200 грн\n3.  Приборна панель на 2 екрани 80 дол\n4.  Блоки розжига галогенових фар з рестайлінга по 50 дол за шт',
-        '1 прода(м) плюс сумма\n2 кнесколько сумм без продам',
-        "Продам колеса за 100 грн",
-        "Продам колеса за грн",
-        "колеса за 100 грн",
-        "Продам колеса за 100 $",
-        "Продам колеса за 100$",
-        "Продам колеса за 100 грн",
-        "100 грн за колеса",
+ads = [
+        {"expect": True,  "text": "auto.ria.com"},
+        {"expect": True,  "text": "Продам два крыла под реставрацию 1000грн"},
+        {"expect": False, "text": "Продам два крыла под реставрацию 1000грн магия"},
+        {"expect": True,  "text": "Продам Ford Fusion Titanium\nЧистый 2018 год\nПробег 8100 км\nVIN 3FA6P0K96JR281035\n\n20500 долларов\nТорг на быстрое переоформление"},
+        {"expect": True,  "text": "Залишки після ремонту (все оигінал) :\n1.  Декоративна накладка з фіксатором кочерги 900 грн\n2.  Замок капота лівий 1200 грн\n3.  Приборна панель на 2 екрани 80 дол\n4.  Блоки розжига галогенових фар з рестайлінга по 50 дол за шт"},
+        {"expect": False, "text": "1 прода(м) плюс сумма\n2 кнесколько сумм без продам"},
+        {"expect": True,  "text": "Продам колеса за 100 грн"},
+        {"expect": False, "text": "Продам колеса за грн"},
+        {"expect": False, "text": "колеса за 100 грн"},
+        {"expect": True,  "text": "Продам колеса за 100 $"},
+        {"expect": True,  "text": "Продам колеса за 100$"},
+        {"expect": True,  "text": "Продам колеса за 100 грн"},
+        {"expect": False, "text": "100 грн за колеса"},
     ]
 
+if "__main__" == __name__:
+    print("Testing...")
     filter = FilterNode(AD_PATTERN_TREE)
     
     single_test = False
     single_idx = 2
 
     if single_test:
-        result1 = filter.is_match_scheme(tests[single_idx])
-        result2 = is_match_ad0(tests[single_idx])
-        print(f"Filter: {result1} | {result2} on text: \"{tests[single_idx]}\"")
+        result1 = filter.is_match_scheme(ads[single_idx]['text'])
+        result2 = is_match_ad0(ads[single_idx]['text'])
+        print(f"Test: {result1} | {result2} on text: \"{ads[single_idx]['text']}\"")
     else:
-        for s in tests:
-            result1 = filter.is_match_scheme(s)
-            result2 = is_match_ad0(s)
-            print(f"Filter: {result1} | {result2} on text: \"{s}\"")
-
-def возможно(arg):
-    return arg + r"?"
-
-
+        for i in range(len(ads)):
+            result1 = filter.is_match_scheme(ads[i]['text'])
+            result2 = is_match_ad0(ads[i]['text'])
+            print(f"Test [{i}]: {'Pass' if result1 == ads[i]['expect'] else 'Fail'} | { 'Pass' if result2 is ads[i]['expect'] else 'Fail'}")

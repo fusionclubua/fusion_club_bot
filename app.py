@@ -70,7 +70,6 @@ def get_user_name(user):
 def get_member_name(member):
     return get_user_name(member.user)
 
-
 def successful_payment_callback(update, context):
     user_id = update.message.from_user.id
     quota_payload = int(update.message.successful_payment.invoice_payload)
@@ -257,7 +256,6 @@ def on_ad_messsage(msg, context):
                 reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
                 context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg_id)
 
-
 def on_banofbot_mention(msg, banof_mention, context):
     complain_banofbot_vote = True
     user_id = msg.from_user.id
@@ -275,7 +273,6 @@ def on_banofbot_mention(msg, banof_mention, context):
     else:
         context.bot.send_message(chat_id, f"Что же, я бы этого не делал!\n{banof_mention}\nУпс, боты не могут видеть сообщения друг друга...", reply_to_message_id=msg_id)
         context.bot.send_sticker(chat_id, sticker_I_will_be_back_file_id)
-
 
 def group_message(update, context):
     msg = None
@@ -301,8 +298,6 @@ def group_message(update, context):
         return on_ad_messsage(msg, context)
     elif banof_mention:
         return on_banofbot_mention(msg, banof_mention, context)
-
-
 
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)

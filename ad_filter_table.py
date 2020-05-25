@@ -125,34 +125,33 @@ class FilterNode(object):
         
         return self_test & children_test
         
-
 AD_PATTERN_TREE = {'logic': Logic.OR, 'children': [
-    FilterNode({'mode': Mode.INCLUDE, 'rx': r"(.+)?auto\.ria\.com(.+)?"})
-    ,FilterNode({'mode': Mode.INCLUDE,'rx': r"([по][рт][оаі]да([мю]|[её]тся))", 'logic': Logic.AND, 'children': [
-        FilterNode({'mode': Mode.INCLUDE, 'rx': r"(\d+([\.,]\d+)?)"})
-        ,FilterNode({'mode': Mode.INCLUDE, 'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"})
-        ,FilterNode({'mode': Mode.EXCLUDE, 'rx': r"магия"})
-    ]})
-    ,FilterNode({'logic': Logic.OR, 'children': [
-        FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(\d+([\.,]\d+)?)(\s+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"})
-        ,FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))(\s+)?(\d+([\.,]\d+)?)"})
+    FilterNode({'mode': Mode.INCLUDE, 'rx': r"(.+)?auto\.ria\.com(.+)?"}),
+    FilterNode({'mode': Mode.INCLUDE,'rx': r"([по][рт][оаі]да([мю]|[её]тся))", 'logic': Logic.AND, 'children': [
+        FilterNode({'mode': Mode.INCLUDE, 'rx': r"(\d+([\.,]\d+)?)"}),
+        FilterNode({'mode': Mode.INCLUDE, 'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"}),
+        FilterNode({'mode': Mode.EXCLUDE, 'rx': r"магия"})
+    ]}),
+    FilterNode({'logic': Logic.OR, 'children': [
+        FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(\d+([\.,]\d+)?)(\s+)?(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))"}),
+        FilterNode({'mode': Mode.INCLUDE, 'count': 2, 'rx': r"(грн|грв|хрн|грив|хривен|UAH|гривен|гривні(в)?|к\b|k\b|usd|дол((л)?ар(ов)?)?|\$|(у\.?(\s{0,30})е\.?))(\s+)?(\d+([\.,]\d+)?)"}),
     ]})
 ]}
 
 ads = [
-        {"expect": True,  "text": "auto.ria.com"},
-        {"expect": True,  "text": "Продам два крыла под реставрацию 1000грн"},
-        {"expect": False, "text": "Продам два крыла под реставрацию 1000грн магия"},
-        {"expect": True,  "text": "Продам Ford Fusion Titanium\nЧистый 2018 год\nПробег 8100 км\nVIN 3FA6P0K96JR281035\n\n20500 долларов\nТорг на быстрое переоформление"},
-        {"expect": True,  "text": "Залишки після ремонту (все оигінал) :\n1.  Декоративна накладка з фіксатором кочерги 900 грн\n2.  Замок капота лівий 1200 грн\n3.  Приборна панель на 2 екрани 80 дол\n4.  Блоки розжига галогенових фар з рестайлінга по 50 дол за шт"},
-        {"expect": False, "text": "1 прода(м) плюс сумма\n2 кнесколько сумм без продам"},
-        {"expect": True,  "text": "Продам колеса за 100 грн"},
-        {"expect": False, "text": "Продам колеса за грн"},
-        {"expect": False, "text": "колеса за 100 грн"},
-        {"expect": True,  "text": "Продам колеса за 100 $"},
-        {"expect": True,  "text": "Продам колеса за 100$"},
-        {"expect": True,  "text": "Продам колеса за 100 грн"},
-        {"expect": False, "text": "100 грн за колеса"},
+        [True,  "auto.ria.com"],
+        [False, "Продам два крыла под реставрацию 1000грн магия"],
+        [True,  "Продам два крыла под реставрацию 1000грн"],
+        [True,  "Продам Ford Fusion Titanium\nЧистый 2018 год\nПробег 8100 км\nVIN 3FA6P0K96JR281035\n\n20500 долларов\nТорг на быстрое переоформление"],
+        [True,  "Залишки після ремонту (все оигінал) :\n1.  Декоративна накладка з фіксатором кочерги 900 грн\n2.  Замок капота лівий 1200 грн\n3.  Приборна панель на 2 екрани 80 дол\n4.  Блоки розжига галогенових фар з рестайлінга по 50 дол за шт"],
+        [False, "1 прода(м) плюс сумма\n2 кнесколько сумм без продам"],
+        [True,  "Продам колеса за 100 грн"],
+        [False, "Продам колеса за грн"],
+        [False, "колеса за 100 грн"],
+        [True,  "Продам колеса за 100 $"],
+        [True,  "Продам колеса за 100$"],
+        [True,  "Продам колеса за 100 грн"],
+        [False, "100 грн за колеса"],
     ]
 
 if "__main__" == __name__:
@@ -163,11 +162,11 @@ if "__main__" == __name__:
     single_idx = 2
 
     if single_test: # For debugging is useful to specify the string and debug it
-        result1 = filter.is_match_scheme(ads[single_idx]['text']) #new way
-        result2 = is_match_ad(ads[single_idx]['text']) #old way
-        print(f"Test: {result1} | {result2} on text: \"{ads[single_idx]['text']}\"")
+        result1 = filter.is_match_scheme(ads[single_idx][1]) #new way
+        result2 = is_match_ad(ads[single_idx][1]) #old way
+        print(f"Test: {result1} | {result2} on text: \"{ads[single_idx][1]}\"")
     else: # Something like a tests ;)
         for i in range(len(ads)):
-            result1 = filter.is_match_scheme(ads[i]['text'])
-            result2 = is_match_ad(ads[i]['text'])
-            print(f"Test [{i}]: {'Pass' if result1 == ads[i]['expect'] else 'Fail'} | { 'Pass' if result2 is ads[i]['expect'] else 'Fail'}")
+            result1 = filter.is_match_scheme(ads[i][1])
+            result2 = is_match_ad(ads[i][1])
+            print(f"Test [{i}]: {'Pass' if result1 == ads[i][0] else 'Fail'} | { 'Pass' if result2 is ads[i][0] else 'Fail'}")

@@ -215,18 +215,19 @@ def is_message_ad(update, context):
     return False
 
 def is_message_banofbot(msg, context):
-    result = False
+    mention = None
     if msg.text and msg.reply_to_message:
         if msg.reply_to_message.from_user.id == context.bot.get_me().id:
-            if (
-                '@' in msg.text and ('banofbot' in msg.text)
-                or ('voteban' in msg.text)
-                or ('Voteban' in msg.text)
-               ):
-                result = True
-    return result
-    
-        
+            if ('@' in msg.text and ('banofbot' in msg.text)):
+                if ('@silent_banofbot' in msg.text):
+                    mention = '@silent_banofbot'
+                else:
+                    mention = '@banofbot'
+            elif ('voteban' in msg.text):
+                mention = 'voteban'
+            elif ('Voteban' in msg.text):
+                mention = 'Voteban'
+    return mention 
 
 def on_ad_messsage(msg, context):
     user_id = msg.from_user.id
@@ -234,33 +235,46 @@ def on_ad_messsage(msg, context):
     chat_id = msg.chat.id
     msg_id = msg.message_id
 
+    # To not delete messabe but send warning
+    ad_monitor_mode = True
+
     user = users_collection.find_one({"_id" : user_id})
     if (user['quota'] >= 1):
         users_collection.update_one({"_id" : user_id}, {'$inc': {"quota": -1}})
     else:
-        try:
-            context.bot.delete_message(chat_id, msg_id)
-            user_mention = "@%s" % user_nick
-            reply_text = "Обнаружена несанкционированная реклама!\nСообщение удалено!"
-            context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), parse_mode=None)
-        except:
+        if ad_monitor_mode:
             user_mention = "@%s" % user_nick
             reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
             context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg_id)
-            #update.message.reply_text("%s\n%s" % (user_mention, reply_text))
+        else:
+            try:
+                context.bot.delete_message(chat_id, msg_id)
+                user_mention = "@%s" % user_nick
+                reply_text = "Обнаружена несанкционированная реклама!\nСообщение удалено!"
+                context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), parse_mode=None)
+            except:
+                user_mention = "@%s" % user_nick
+                reply_text = "Обнаружена реклама!\nВы получаете предупреждение!"
+                context.bot.send_message(chat_id, "%s\n%s" % (user_mention, reply_text), reply_to_message_id = msg_id)
 
-def on_banofbot_mention(msg, context):
+
+def on_banofbot_mention(msg, banof_mention, context):
+    complain_banofbot_vote = True
     user_id = msg.from_user.id
     user_nick = msg.from_user.username
     chat_id = msg.chat.id
     msg_id = msg.message_id
-    sticker_file_id = 'CAACAgIAAx0CV_vo1QACAQteys6AittesCZ9iGkRPLCueYMWxwACGgIAAzigCtQ5vjSOsG1SGQQ'
-    context.bot.send_sticker(chat_id, sticker_file_id, reply_to_message_id=msg_id)
-
-    creator = get_chat_admin(context, chat_id, True)
-    context.bot.send_message(chat_id, f"{get_member_name(creator)}\nЧто за дела?\nЯ так немогу работать!\nМеня хочет забанить: {get_user_name(msg.from_user)}", reply_to_message_id=msg_id)
-
-
+    sticker_fuck_you_file_id = 'CAACAgIAAx0CV_vo1QACAQteys6AittesCZ9iGkRPLCueYMWxwACGgIAAzigCtQ5vjSOsG1SGQQ'
+    sticker_I_will_be_back_file_id = 'CAACAgIAAx0CV_vo1QACAUFeyvCvkCgAAWhcHR8ud-qkY0zOgggAAg8CAAM4oApaClLQrALznRkE'
+    context.bot.send_sticker(chat_id, sticker_fuck_you_file_id, reply_to_message_id=msg_id)
+    
+    if complain_banofbot_vote:
+        creator = get_chat_admin(context, chat_id, True)
+        context.bot.send_message(chat_id, f"Что же, я бы этого не делал!\n{banof_mention}\nУпс, боты не могут видеть сообщения друг друга...\nНо я могу пожаловаться!", reply_to_message_id=msg_id)
+        context.bot.send_message(chat_id, f"{get_member_name(creator)}\nЧто за дела?\nЯ так немогу работать!\nМеня хочет забанить: {get_user_name(msg.from_user)}", reply_to_message_id=msg_id)
+    else:
+        context.bot.send_message(chat_id, f"Что же, я бы этого не делал!\n{banof_mention}\nУпс, боты не могут видеть сообщения друг друга...", reply_to_message_id=msg_id)
+        context.bot.send_sticker(chat_id, sticker_I_will_be_back_file_id)
 
 
 def group_message(update, context):
@@ -281,10 +295,12 @@ def group_message(update, context):
 
     print("---------------------------------------------------------------------------------------------------------------------------------------------\nGroup message: {}".format(update.message))
 
+    banof_mention  = is_message_banofbot(msg, context)
+
     if is_message_ad(update, context):
         return on_ad_messsage(msg, context)
-    elif is_message_banofbot(msg, context):
-        return on_banofbot_mention(msg, context)
+    elif banof_mention:
+        return on_banofbot_mention(msg, banof_mention, context)
 
 
 

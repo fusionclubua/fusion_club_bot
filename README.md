@@ -8,10 +8,10 @@ Please, join to Telegram Messanger group [Чат бот для Fusion Club](http
 
  ### So you need to: ###
  * Install [MongoDB](https://www.mongodb.com/download-center/community), and launch it.
- * To work with MongoDB you would need also [MongoDB Compass](https://www.mongodb.com/download-center/compass) as a GUI for MongoDB. Or you could work in mongo CLI.
+ * To work with MongoDB you would need also install [MongoDB Compass](https://www.mongodb.com/download-center/compass) as a GUI for MongoDB. Or you could work in mongo CLI.
  * Create new database with name: FusionClubDB
  * Setup FusionClubDB, how to do that I will describe later.
-
+***
     $ python -m venv < venv folder >
     $ pip install -r requirements.txt
     $ python app.py

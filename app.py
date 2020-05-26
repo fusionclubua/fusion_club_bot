@@ -101,6 +101,9 @@ def menu_callback(update, context):
     print('Command: [{}] {}'.format(update.message.from_user.username, update.message.text))
     return MAIN_MENU
 
+def fallback_callback(update, context):
+    print(f'{"/" * 50}\n This is fallback:\n{update}\n')
+
 def main_menu_callback(update, context):
     query = update.callback_query
     query.answer()
@@ -299,9 +302,10 @@ def group_message(update, context):
     elif banof_mention:
         return on_banofbot_mention(msg, banof_mention, context)
 
+from addad_handler import addad_handler
+
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('menu', menu_callback, Filters.private),
                         CommandHandler('start', menu_callback, Filters.private)],
@@ -309,23 +313,27 @@ def main(argv):
             MAIN_MENU:  [CallbackQueryHandler(help_callback, pattern='^' + str(HELP) + '$'),
                         CallbackQueryHandler(balance_callback, pattern='^' + str(BALANCE) + '$'),
                         CallbackQueryHandler(topup_callback, pattern='^' + str(TOPUP) + '$'),
-                        CallbackQueryHandler(addad_callback, pattern='^' + str(ADDAD) + '$')],
+                        #CallbackQueryHandler(addad_callback, pattern='^' + str(ADDAD) + '$')],
+                        addad_handler],
             TOPUP_MENU: [CallbackQueryHandler(main_menu_callback, pattern='^' + str(BACK) + '$'),
                         CallbackQueryHandler(buy_callback, pattern=r'^topup_\d+$')]
         },
-        fallbacks=[CommandHandler('menu', menu_callback, Filters.private)]
+        fallbacks=[MessageHandler(Filters.private, fallback_callback)],
+        allow_reentry = True
     )
+
 
     # updater.dispatcher.add_handler(CommandHandler('start', start_callback))
     # updater.dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), message_handler))
 
     updater.dispatcher.add_handler(conv_handler)
+    #updater.dispatcher.add_handler(addad_handler)
     # updater.dispatcher.add_handler(CommandHandler('start', group_activation_callback, Filters.group))
     # updater.dispatcher.add_handler(MessageHandler(Filters.chat(test_group) | Filters.chat(test_group2) | Filters.chat(FusionClubBotTest) | Filters.chat(FusionClubUkraine), group_message))
     updater.dispatcher.add_handler(MessageHandler(CustomFilter(), group_message))
     updater.dispatcher.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     updater.dispatcher.add_handler(MessageHandler(Filters.successful_payment, successful_payment_callback))
-    
+    updater.dispatcher.add_error_handler(error)
     updater.start_polling()
     updater.idle()
 

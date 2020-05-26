@@ -10,7 +10,7 @@ Please, join to Telegram Messanger group [Чат бот для Fusion Club](http
 1. Official [Telegram BOT API](https://core.telegram.org/bots/api)
 2. This project using [python-telegram-bot](https://python-telegram-bot.org) as Telegram API wrapper implemenration for this project.
  
- ### What I need to know? ###
+ ### What about MongoDB? ###
  * Install [MongoDB](https://www.mongodb.com/download-center/community), and launch it.
  * To work with MongoDB you would need also install [MongoDB Compass](https://www.mongodb.com/download-center/compass) as a GUI for MongoDB. Or you could work in mongo CLI.
  * Create new database with name: FusionClubDB

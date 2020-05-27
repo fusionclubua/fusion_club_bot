@@ -2,15 +2,14 @@ import sys, logging, re, json
 from pymongo import MongoClient
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCheckoutQueryHandler, CallbackQueryHandler, ConversationHandler, BaseFilter
 from telegram import User, Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-from ad_filter_table import is_match_ad, FilterNode, AD_PATTERN_TREE, AD_FILTERS, AD_FILTER_FLAGS, Logic
-from config import config as cfg
+from ad_filter_table import AdFilter
+from bot_settings import settings
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)                  
 
-DEFAULT_BOT = 'FusionClubADMaster'
 QUOTA_PRICE = 10
 
 # Stages
@@ -19,8 +18,7 @@ MAIN_MENU, TOPUP_MENU = range(2)
 HELP, BALANCE, TOPUP, ADDAD, BACK = range(5)
 
 # Create the client
-client = MongoClient('localhost', 27017)
-filter_root = FilterNode(AD_PATTERN_TREE)
+client = MongoClient(settings.db_address, settings.db_port)
 # Connect to our database
 db = client['FusionClubDB']
 # Fetch our series collection
@@ -39,7 +37,7 @@ class CustomFilter(BaseFilter):
         return False
 
 def get_settings():
-    return setting_collection.find_one({'bot_name' : cfg.get('db_bot', DEFAULT_BOT)})
+    return setting_collection.find_one({'bot_name' : settings.db_bot})
 
 def get_bot_name():
     return get_settings()["bot_name"]
@@ -210,9 +208,8 @@ def is_message_ad(update, context):
     strings = collect_strings(update)
 
     for string in strings:
-        if filter_root.is_match_scheme(string):
+        if AdFilter.is_match_scheme(string):
             return True
-        # if is_match_ad(string): return True
 
     return False
 
@@ -304,6 +301,12 @@ def group_message(update, context):
 
 from addad_handler import addad_handler
 
+def run_updater(updater: Updater):
+    #updater.start_webhook()
+    updater.start_polling()
+    updater.idle()
+
+
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)
     conv_handler = ConversationHandler(
@@ -334,8 +337,7 @@ def main(argv):
     updater.dispatcher.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     updater.dispatcher.add_handler(MessageHandler(Filters.successful_payment, successful_payment_callback))
     updater.dispatcher.add_error_handler(error)
-    updater.start_polling()
-    updater.idle()
+    run_updater(updater)
 
 if __name__ == '__main__':
     main(sys.argv)

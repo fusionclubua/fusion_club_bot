@@ -1,6 +1,6 @@
 import unittest
 from parameterized import parameterized
-from ad_filter_table import FilterNode, AD_PATTERN_TREE
+from ad_filter_table import AdFilter
 
 ads = [
         [True,  "auto.ria.com"],
@@ -24,7 +24,7 @@ class TestSequence(unittest.TestCase):
 
     def __init__(self, name):
         super().__init__(name)
-        self.filter = FilterNode(AD_PATTERN_TREE)
+        self.filter = AdFilter
 
     def execute(self, idx):
         text = ads[idx]['text']

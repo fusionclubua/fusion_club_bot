@@ -138,6 +138,8 @@ AD_PATTERN_TREE = {'logic': Logic.OR, 'children': [
     ]})
 ]}
 
+AdFilter = FilterNode(AD_PATTERN_TREE)
+
 ads = [
         [True,  "auto.ria.com"],
         [False, "Продам два крыла под реставрацию 1000грн магия"],

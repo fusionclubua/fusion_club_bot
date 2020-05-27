@@ -258,8 +258,8 @@ def on_ad_messsage(msg, context):
 
 def on_banofbot_mention(msg, banof_mention, context):
     complain_banofbot_vote = True
-    user_id = msg.from_user.id
-    user_nick = msg.from_user.username
+    #user_id = msg.from_user.id
+    #user_nick = msg.from_user.username
     chat_id = msg.chat.id
     msg_id = msg.message_id
     sticker_fuck_you_file_id = 'CAACAgIAAx0CV_vo1QACAQteys6AittesCZ9iGkRPLCueYMWxwACGgIAAzigCtQ5vjSOsG1SGQQ'
@@ -283,9 +283,9 @@ def group_message(update, context):
     if not msg: return
 
     user_id = msg.from_user.id
-    user_nick = msg.from_user.username
-    chat_id = msg.chat.id
-    msg_id = msg.message_id
+    #user_nick = msg.from_user.username
+    #chat_id = msg.chat.id
+    #msg_id = msg.message_id
 
     if users_collection.count_documents({"_id" : user_id}) == 0:
         users_collection.insert_one({"_id" : user_id, "quota" : 0})

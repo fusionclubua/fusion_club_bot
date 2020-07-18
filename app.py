@@ -4,6 +4,13 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, PreCh
 from telegram import User, Invoice, LabeledPrice, SuccessfulPayment, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from ad_filter_table import AdFilter
 from settings import settings
+import helpers
+
+
+#if sys.platform == 'win32': asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+#import uvloop
+#asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -302,10 +309,33 @@ def group_message(update, context):
 from addad_handler import addad_handler
 
 def run_updater(updater: Updater):
-    #updater.start_webhook()
-    updater.start_polling()
+    if settings.use_webhook:
+        updater.start_webhook(listen=settings.listen_addr, port=settings.listen_port,
+        key=settings.webhook_key,
+        cert=settings.webhook_crt,
+        url_path=settings.url_path,
+        webhook_url=settings.webhook_url,
+        clean = True
+        )
+        #updater.bot.set_webhook(f'https://fusionclub.ddns.net:88/bot', certificate=open('cert/ddns/comodo-354225148/fusionclub_ddns_net.crt', 'rb'))
+    else:
+        updater.start_polling()
     updater.idle()
 
+# State definitions for top level conversation
+SELECTING_ACTION, ADDING_MEMBER, ADDING_SELF, DESCRIBING_SELF = map(chr, range(4))
+# State definitions for second level conversation
+SELECTING_LEVEL, SELECTING_GENDER = map(chr, range(4, 6))
+# State definitions for descriptions conversation
+SELECTING_FEATURE, TYPING = map(chr, range(6, 8))
+# Meta states
+STOPPING, SHOWING = map(chr, range(8, 10))
+# Shortcut for ConversationHandler.END
+END = ConversationHandler.END
+
+# Different constants for this example
+(PARENTS, CHILDREN, SELF, GENDER, MALE, FEMALE, AGE, NAME, START_OVER, FEATURES,
+ CURRENT_FEATURE, CURRENT_LEVEL) = map(chr, range(10, 22))
 
 def main(argv):
     updater = Updater(get_bot_token(), use_context=True)
@@ -340,4 +370,5 @@ def main(argv):
     run_updater(updater)
 
 if __name__ == '__main__':
+    helpers.fix_asyncio_event_loop_policy()
     main(sys.argv)

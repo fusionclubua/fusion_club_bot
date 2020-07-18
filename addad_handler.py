@@ -1,76 +1,113 @@
 #from varname import nameof
 from telegram.ext import Filters, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram import Message, Update
-ROOT, CANCEL, DONE, ADD_TITLE, ADD_PRICE, ADD_DESCRIPTION, ADD_PICTURE = range(7)
+from enum import Enum
+
+class State(Enum):
+    def __str__(self):
+        return 'addad_handler_{0}'.format(self.value)
+
+    ROOT = 1
+    CANCEL = 2
+    DONE = 3
+    ADD_TITLE = 4
+    ADD_PRICE = 5
+    ADD_DESCRIPTION = 6
+    ADD_PICTURE = 7
+
+#ROOT, CANCEL, DONE, ADD_TITLE, ADD_PRICE, ADD_DESCRIPTION, ADD_PICTURE = map(range(7))
+
+reply_keyboardInline = [
+        [InlineKeyboardButton('Заголовок', callback_data=str(State.ADD_TITLE))],
+        [InlineKeyboardButton('Цена', callback_data=str(State.ADD_PRICE))],
+        [InlineKeyboardButton('Описание', callback_data=str(State.ADD_DESCRIPTION))],
+        [InlineKeyboardButton('Изображение', callback_data=str(State.ADD_PICTURE))],
+        
+        [InlineKeyboardButton('Отмена', callback_data=str(State.CANCEL)),
+         InlineKeyboardButton('Готово', callback_data=str(State.DONE))],
+    ]
 
 reply_keyboard = [
-        [InlineKeyboardButton('Заголовок', callback_data=f'{ADD_TITLE}')],
-        [InlineKeyboardButton('Цена', callback_data=f'{ADD_PRICE}')],
-        [InlineKeyboardButton('Описание', callback_data=f'{ADD_DESCRIPTION}')],
-        [InlineKeyboardButton('Изображение', callback_data=f'{ADD_PICTURE}')],
+        [KeyboardButton('Заголовок', callback_data=str(State.ADD_TITLE)),
+        KeyboardButton('Цена', callback_data=str(State.ADD_PRICE)),
+        KeyboardButton('Описание', callback_data=str(State.ADD_DESCRIPTION)),
+        KeyboardButton('Изображение', callback_data=str(State.ADD_PICTURE))],
         
-        [InlineKeyboardButton('Отмена', callback_data=f'{CANCEL}'),
-         InlineKeyboardButton('Готово', callback_data=f'{DONE}')],
+        [KeyboardButton('Отмена', callback_data=str(State.CANCEL)),
+         KeyboardButton('Готово', callback_data=str(State.DONE))],
     ]
+
+keyboard = reply_keyboardInline
+markup = InlineKeyboardMarkup(keyboard) if keyboard == reply_keyboardInline else ReplyKeyboardMarkup(keyboard)
+
+def addad_entry(update, context):
+    print('\nADDAD ENTRY\n')
+    return addad(update, context)
 
 def addad(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text('Что вы хотите добавить в обьявление?', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    context.bot.send_message(query.message.chat.id, "select", reply_markup=markup)
+    #query.edit_message_text('Что вы хотите добавить в обьявление?', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_cancel(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(f'{query.message.text}\nCANCEL', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nCANCEL', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_done(update, context):
     query = update.callback_query
     query.answer()
-    update.message.edit_message_text(f'{query.message.text}\nDONE', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nDONE', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_title(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(f'{query.message.text}\nTITLE', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nTITLE', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_price(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(f'{query.message.text}\nPRICE', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nPRICE', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_picture(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(f'{query.message.text}\nPICTURE', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nPICTURE', reply_markup=markup)
+    return str(State.ROOT)
 
 def addad_description(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(f'{query.message.text}\nDESCRIPTION', reply_markup=InlineKeyboardMarkup(reply_keyboard))
-    return ROOT
+    query.edit_message_text(f'{query.message.text}\nDESCRIPTION', reply_markup=markup)
+    return str(State.ROOT)
 
 addad_handler = ConversationHandler(
         entry_points = [
             CommandHandler('newad', addad),
-            CallbackQueryHandler(addad, pattern=f'^{3}$')
+            CallbackQueryHandler(addad_entry, pattern=f'^{3}$')
         ],
         states = {
-            ROOT:            [CallbackQueryHandler(addad, pattern=f'^{CANCEL}$')],
+            str(State.ROOT):            [CallbackQueryHandler(addad, pattern=str(State.CANCEL)),
+                                        CallbackQueryHandler(addad_done, pattern=str(State.DONE)),
+                                        CallbackQueryHandler(addad_title, pattern=str(State.ADD_TITLE)),
+                                        CallbackQueryHandler(addad_price, pattern=str(State.ADD_PRICE)),
+                                        CallbackQueryHandler(addad_picture, pattern=str(State.ADD_PICTURE)),
+                                        CallbackQueryHandler(addad_description, pattern=str(State.ADD_DESCRIPTION))],
             #ADD_TITLE:       [MessageHandler(Filters.text, addad_title)],
-            ADD_TITLE:       [CallbackQueryHandler(addad_title, pattern=f'^{ADD_TITLE}$')],
+            str(State.ADD_TITLE):       [CallbackQueryHandler(addad_title, pattern=str(State.ADD_TITLE))],
             #ADD_PRICE:       [MessageHandler(Filters.regex(r'(\d+([\.,]\d+)?)'), addad_price)],
-            ADD_PRICE:       [CallbackQueryHandler(addad_price, pattern=f'^{ADD_PRICE}$')],
+            str(State.ADD_PRICE):       [CallbackQueryHandler(addad_price, pattern=str(State.ADD_PRICE))],
             #ADD_PICTURE:     [MessageHandler(Filters.photo, addad_picture)],
-            ADD_PICTURE:     [CallbackQueryHandler(addad_picture, pattern=f'^{ADD_PICTURE}$')],
+            str(State.ADD_PICTURE):     [CallbackQueryHandler(addad_picture, pattern=str(State.ADD_PICTURE))],
             #ADD_DESCRIPTION: [MessageHandler(Filters.text, addad_description)]
-            ADD_DESCRIPTION: [CallbackQueryHandler(addad_description, pattern=f'^{ADD_DESCRIPTION}$')]
+            str(State.ADD_DESCRIPTION): [CallbackQueryHandler(addad_description, pattern=str(State.ADD_DESCRIPTION))]
         },
         fallbacks=[CommandHandler('cancel', addad_cancel)]
     )

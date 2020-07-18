@@ -15,5 +15,10 @@
 				"console": "integratedTerminal"
 			}
 		]
+	},
+	"settings": {
+		"python.venvFolders": [
+			"venv"
+		]
 	}
 }
